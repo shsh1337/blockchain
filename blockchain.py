@@ -7,6 +7,10 @@ import os
 from pathlib import Path
 import requests
 from flask import Flask, jsonify, request
+
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
 #if Error - "pip install pipenv" -> "pipenv install" 
 
 class Blockchain:
@@ -20,8 +24,35 @@ class Blockchain:
         self.chain = []
         self.nodes = set()
         self.load_config(config_path)
+        self.signing('test')
         # Create the genesis block
         self.new_block(previous_hash='1', proof=100)
+
+    def signing(self,data):
+        # Генерируете новый ключ (или берете ранее сгенерированный)
+        key = RSA.generate(1024)
+        print("Secr key: ")
+        print(key)
+        #print(key)
+        # Получаете хэш файла
+        h = SHA256.new()
+        h.update(data.encode('utf-8'))
+
+        # Подписываете хэш
+        signature = PKCS1_v1_5.new(key).sign(h)
+
+        # Получаете открытый ключ из закрытого
+        pubkey = key.publickey()
+        print("PubKey: ")
+        print(pubkey)
+
+        # Пересылаете пользователю файл, публичный ключ и подпись
+        # На стороне пользователя заново вычисляете хэш файла (опущено) и сверяете подпись
+        print(PKCS1_v1_5.new(pubkey).verify(h, signature))
+
+        # Отличающийся хэш не должен проходить проверку
+        #pkcs1_15.new(pubkey).verify(SHA256.new(b'test'), signature) # raise ValueError("Invalid signature")
+        return True
 
     def load_config(self,c_path):
         exists = os.path.isfile(c_path)
