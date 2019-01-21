@@ -3,6 +3,8 @@ import json
 from time import time
 from urllib.parse import urlparse
 from uuid import uuid4
+import os
+
 
 import requests
 from flask import Flask, jsonify, request
@@ -13,9 +15,36 @@ class Blockchain:
         self.current_transactions = []
         self.chain = []
         self.nodes = set()
-
+        self.load_config()
         # Create the genesis block
         self.new_block(previous_hash='1', proof=100)
+
+    def load_config(self):
+        exists = os.path.isfile('test_conf.txt')
+        if not exists:
+            # Store configuration file values
+            print("Config file does not exists!")
+        else:
+            # Keep presets
+            conf = open('test_conf.txt', 'r').read()
+            if conf == "":
+                print("Config file is clear.")
+                return
+            json_str = json.loads(conf)
+            #print(json_str)
+            nodes = json_str.get('nodes')
+            #print(nodes)
+            for node in nodes:
+                parsed_url = urlparse(node)
+                if parsed_url.netloc:
+                    self.nodes.add(parsed_url.netloc)
+                elif parsed_url.path:
+                    # Accepts an URL without scheme like '192.168.0.5:5000'.
+                    self.nodes.add(parsed_url.path)
+                else:
+                    raise ValueError('Invalid URL')
+            print("Loaded nodes from config file: ")
+            print(self.nodes)
 
     def register_node(self, address):
         """
@@ -188,7 +217,7 @@ class Blockchain:
 
         guess = f'{last_proof}{proof}{last_hash}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:4] == "0000"
+        return guess_hash[:6] == "000000"
 
 
 # Instantiate the Node
@@ -228,6 +257,20 @@ def mine():
     }
     return jsonify(response), 200
 
+@app.route('/nodes/proof_verify', methods=['POST'])
+def proof_verify():
+    values = request.get_json()
+
+    proof = values.get('proof')
+
+    #Check received proof
+    last_block = blockchain.last_block
+    if blockchain.valid_proof(last_block['proof'],proof,blockchain.hash(last_block)):
+        #все четко
+        return True
+    else:
+        #проблемс
+        return False
 
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
@@ -297,5 +340,6 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
     args = parser.parse_args()
     port = args.port
-
+    print("Node id is: "+node_identifier)
     app.run(host='0.0.0.0', port=port)
+
