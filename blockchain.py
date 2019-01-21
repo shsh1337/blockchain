@@ -4,38 +4,65 @@ from time import time
 from urllib.parse import urlparse
 from uuid import uuid4
 import os
-
-
+from pathlib import Path
 import requests
 from flask import Flask, jsonify, request
-
+#if Error - "pip install pipenv" -> "pipenv install" 
 
 class Blockchain:
+
+    ## Generate a globally unique address for this node
+    node_identifier = ''#str(uuid4()).replace('-', '')
+    pub_key = ''
+
     def __init__(self):
         self.current_transactions = []
         self.chain = []
         self.nodes = set()
-        self.load_config()
+        self.load_config(config_path)
         # Create the genesis block
         self.new_block(previous_hash='1', proof=100)
 
-    def load_config(self):
-        exists = os.path.isfile('test_conf.txt')
+    def load_config(self,c_path):
+        exists = os.path.isfile(c_path)
         if not exists:
-            # Store configuration file values
+            # Store configuration file values d11589d93e7d4ba1a9e31844e6035734
             print("Config file does not exists!")
         else:
             # Keep presets
-            conf = open('test_conf.txt', 'r').read()
+            conf = open(c_path, 'r').read()
+            w_path = Path(c_path)
             if conf == "":
                 print("Config file is clear.")
                 return
+            #print(conf)
             json_str = json.loads(conf)
             #print(json_str)
             nodes = json_str.get('nodes')
-            #print(nodes)
+
+            if (json_str.get('pub_key')==''):
+                #nonlocal pub_key
+                self.pub_key = 'test_generated_key_value' #тут вызов процедуры генерации ключей
+                json_str['pub_key'] = self.pub_key
+                w_path.write_text(json.dumps(json_str,sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
+            else:
+                #nonlocal pub_key
+                self.pub_key = json_str.get('pub_key')
+            print("Public key is: "+self.pub_key)
+
+            if (json_str.get('uid')==''):
+                #nonlocal node_identifier
+                self.node_identifier = str(uuid4()).replace('-', '')
+                json_str['uid'] = self.node_identifier
+                w_path.write_text(json.dumps(json_str,sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
+            else:
+                #nonlocal node_identifier
+                self.node_identifier = json_str.get('uid')
+            print("Node id is: "+self.node_identifier)
+            #print(node_identifier)
             for node in nodes:
-                parsed_url = urlparse(node)
+                #print(node)#Debug
+                parsed_url = urlparse(node['address'])
                 if parsed_url.netloc:
                     self.nodes.add(parsed_url.netloc)
                 elif parsed_url.path:
@@ -43,7 +70,7 @@ class Blockchain:
                     self.nodes.add(parsed_url.path)
                 else:
                     raise ValueError('Invalid URL')
-            print("Loaded nodes from config file: ")
+            print("Loaded nodes from config file ("+c_path+"): ")
             print(self.nodes)
 
     def register_node(self, address):
@@ -219,16 +246,8 @@ class Blockchain:
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:6] == "000000"
 
-
 # Instantiate the Node
 app = Flask(__name__)
-
-# Generate a globally unique address for this node
-node_identifier = str(uuid4()).replace('-', '')
-
-# Instantiate the Blockchain
-blockchain = Blockchain()
-
 
 @app.route('/mine', methods=['GET'])
 def mine():
@@ -254,6 +273,14 @@ def mine():
         'transactions': block['transactions'],
         'proof': block['proof'],
         'previous_hash': block['previous_hash'],
+    }
+    return jsonify(response), 200
+
+@app.route('/info', methods=['GET'])
+def get_info():
+    response = {
+        'uid': blockchain.node_identifier,
+        'key': blockchain.pub_key
     }
     return jsonify(response), 200
 
@@ -333,13 +360,28 @@ def consensus():
     return jsonify(response), 200
 
 
+config_path = ''
+## Generate a globally unique address for this node
+#node_identifier = '098'#str(uuid4()).replace('-', '')
+#pub_key = '987'
+
 if __name__ == '__main__':
     from argparse import ArgumentParser
-
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
+    parser.add_argument('-c', '--config', default='test_conf.txt', type=str, help='path to config file')
     args = parser.parse_args()
     port = args.port
-    print("Node id is: "+node_identifier)
-    app.run(host='0.0.0.0', port=port)
-
+    #conf_path = args.config
+    config_path = args.config
+    #print("Node id is: "+node_identifier)
+    Error = True
+    while(Error): 
+        try:
+            Error = False
+            # Instantiate the Blockchain
+            blockchain = Blockchain()
+            app.run(host='0.0.0.0', port=port)
+        except OSError:
+            Error = True
+            port = port + 1

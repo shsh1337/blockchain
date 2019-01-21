@@ -1,1 +1,16 @@
-{"nodes": ["localhost:5001","localhost:5002"]}
+{
+    "uid": "b7fd28117c0040a798433ced25577e45",
+    "pub_key": "test_generated_key_value",
+    "nodes": [
+        {
+            "address": "localhost:5001",
+            "pub_key": "124125125",
+            "uid": "1242142"
+        },
+        {
+            "address": "localhost:5002",
+            "pub_key": "3253892389235",
+            "uid": "125153215"
+        }
+    ]
+}
