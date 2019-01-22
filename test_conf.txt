@@ -1,16 +1,16 @@
 {
     "uid": "b7fd28117c0040a798433ced25577e45",
-    "pub_key": "test_generated_key_value",
+    "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCiuRcQbzjGGVHtPtPqJdm9tpy6\nele1vDfImn+mrWTqyGCxPFr5Hi0a6H0UiMhZTvFx3Wj+w1BMwX43x6FWPZY9xNuy\n9kNZEkFpJmhG62jOK3a/yAMSThfmP+rKar2yRU02T3931wNJ/A6HOgy2twhEZ7JZ\nxedbzDiNlOBq0kmDCQIDAQAB\n-----END PUBLIC KEY-----",
     "nodes": [
         {
             "address": "localhost:5001",
-            "pub_key": "124125125",
-            "uid": "1242142"
+            "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7AwcPIGa0zcoar6mFeH+Vc/2m\n+LSpErN6y1ETiRNsv7x2QzSkSIfsCB6Qvz3xCkMUSpKV+KBB1A9tDKnOfuhX9hXK\n2JeMr8Txgl/bArP4BQWWMkU5U9MBqLT79Hr/2XfHTH7/WAnyZqrcitN5nipb+wup\nVDo4NdOoUh7jyUXQjQIDAQAB\n-----END PUBLIC KEY-----",
+            "uid": "1f1f9e5911474dc6a2c02528b8670e62"
         },
         {
             "address": "localhost:5002",
-            "pub_key": "3253892389235",
-            "uid": "125153215"
+            "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDiY/JlYQZvkHH+wbM7rCb8pKIU\nupfVUQpYghlCtnElsqb9C9Kh9t8zV9lf78ioeQCcvzKTk5W+zpGbQz5BEwr3JsuE\njjge5o7Lgz3CaRzDG203K39FVKPwyQ50okFMM4cevX44zDlhBULqkj9+xFYhAUaT\ntAMe0TANA8EM6Za8xwIDAQAB\n-----END PUBLIC KEY-----",
+            "uid": "a0c43caf8db54ee2bbf0d51511710729"
         }
     ]
 }

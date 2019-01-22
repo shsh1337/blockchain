@@ -8,6 +8,8 @@ from pathlib import Path
 import requests
 from flask import Flask, jsonify, request
 
+from base64 import b64decode,b64encode
+
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
@@ -18,41 +20,41 @@ class Blockchain:
     ## Generate a globally unique address for this node
     node_identifier = ''#str(uuid4()).replace('-', '')
     pub_key = ''
+    priv_key = ''
 
     def __init__(self):
         self.current_transactions = []
         self.chain = []
         self.nodes = set()
         self.load_config(config_path)
-        self.signing('test')
+        #self.signing('test')
         # Create the genesis block
         self.new_block(previous_hash='1', proof=100)
 
-    def signing(self,data):
-        # Генерируете новый ключ (или берете ранее сгенерированный)
+    def gen_keys(self):
         key = RSA.generate(1024)
-        print("Secr key: ")
-        print(key)
-        #print(key)
-        # Получаете хэш файла
-        h = SHA256.new()
-        h.update(data.encode('utf-8'))
-
-        # Подписываете хэш
-        signature = PKCS1_v1_5.new(key).sign(h)
+        #print("Secr key: ", key)
+        f = open(self.node_identifier+'_privk','wb')
+        f.write(bytes(key.exportKey('PEM',passphrase=''))); f.close()
+        #print(key.exportKey('PEM'))
 
         # Получаете открытый ключ из закрытого
         pubkey = key.publickey()
-        print("PubKey: ")
-        print(pubkey)
+        #print("PubKey: ", pubkey)
+        f = open(self.node_identifier+'_pk','wb')
+        f.write(bytes(pubkey.exportKey('PEM'))); f.close()
+        return pubkey.exportKey('PEM'),key.exportKey('PEM',passphrase='')
 
-        # Пересылаете пользователю файл, публичный ключ и подпись
-        # На стороне пользователя заново вычисляете хэш файла (опущено) и сверяете подпись
-        print(PKCS1_v1_5.new(pubkey).verify(h, signature))
+    def signing(self,data):
+        #key = RSA.importKey(self.priv_key)
+        h = SHA256.new()
+        h.update(data.to_bytes(255, byteorder='big'))
+        signature = PKCS1_v1_5.new(self.priv_key).sign(h)
+        return signature
 
+        #print(PKCS1_v1_5.new(pubkey).verify(h, signature))
         # Отличающийся хэш не должен проходить проверку
         #pkcs1_15.new(pubkey).verify(SHA256.new(b'test'), signature) # raise ValueError("Invalid signature")
-        return True
 
     def load_config(self,c_path):
         exists = os.path.isfile(c_path)
@@ -71,25 +73,27 @@ class Blockchain:
             #print(json_str)
             nodes = json_str.get('nodes')
 
-            if (json_str.get('pub_key')==''):
-                #nonlocal pub_key
-                self.pub_key = 'test_generated_key_value' #тут вызов процедуры генерации ключей
-                json_str['pub_key'] = self.pub_key
-                w_path.write_text(json.dumps(json_str,sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
-            else:
-                #nonlocal pub_key
-                self.pub_key = json_str.get('pub_key')
-            print("Public key is: "+self.pub_key)
-
             if (json_str.get('uid')==''):
-                #nonlocal node_identifier
                 self.node_identifier = str(uuid4()).replace('-', '')
                 json_str['uid'] = self.node_identifier
                 w_path.write_text(json.dumps(json_str,sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
             else:
-                #nonlocal node_identifier
                 self.node_identifier = json_str.get('uid')
             print("Node id is: "+self.node_identifier)
+
+            if (json_str.get('pub_key')==''):
+                self.pub_key,self.priv_key = self.gen_keys() #тут вызов процедуры генерации ключей
+                json_str['pub_key'] = self.pub_key.decode('UTF-8')
+                #print(self.pub_key.decode('UTF-8'))
+                #print(self.priv_key.decode('UTF-8'))
+                w_path.write_text(json.dumps(json_str,sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
+            else:
+                self.pub_key = RSA.importKey(json_str.get('pub_key'))
+                self.priv_key = RSA.importKey(open(self.node_identifier+'_privk').read())
+                #print(self.pub_key)
+                #print(self.priv_key)
+            #print("Public key is: ",self.pub_key)
+
             #print(node_identifier)
             for node in nodes:
                 #print(node)#Debug
@@ -261,6 +265,32 @@ class Blockchain:
 
         return proof
 
+    def proof_check(self,proof):
+
+        signature = self.signing(proof)
+        
+        #
+        # Encode signature with base64
+        # 
+        signature = str(b64encode(signature))[2:].strip('\\n')
+
+        request = {
+            'proof': proof,
+            'sign': signature,
+            'uid': self.node_identifier
+        }
+        #print(request)
+        #print(type(signature))
+        #headers = {'Content-type': 'application/json'}
+        for node in self.nodes:
+            #print(node)
+            r=requests.post('http://'+node+'/nodes/proof_verify', json=request)#, headers=headers)
+            print('Response: '+r.text)
+
+        return True
+
+
+
     @staticmethod
     def valid_proof(last_proof, proof, last_hash):
         """
@@ -275,7 +305,7 @@ class Blockchain:
 
         guess = f'{last_proof}{proof}{last_hash}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
-        return guess_hash[:6] == "000000"
+        return guess_hash[:5] == "00000"
 
 # Instantiate the Node
 app = Flask(__name__)
@@ -286,11 +316,14 @@ def mine():
     last_block = blockchain.last_block
     proof = blockchain.proof_of_work(last_block)
 
+    blockchain.proof_check(proof)
+    ###send proof to another nodes
+
     # We must receive a reward for finding the proof.
     # The sender is "0" to signify that this node has mined a new coin.
     blockchain.new_transaction(
         sender="0",
-        recipient=node_identifier,
+        recipient=blockchain.node_identifier,
         amount=1,
     )
 
@@ -311,15 +344,45 @@ def mine():
 def get_info():
     response = {
         'uid': blockchain.node_identifier,
-        'key': blockchain.pub_key
+        'key': blockchain.pub_key.exportKey('PEM').decode('UTF-8')
     }
     return jsonify(response), 200
 
 @app.route('/nodes/proof_verify', methods=['POST'])
 def proof_verify():
     values = request.get_json()
-
+    print(values)
     proof = values.get('proof')
+    print ("debug")
+    print (values.get('sign'))
+    print ("---")
+    try:
+        sign = b64decode(values.get('sign'))
+    except Exception as e:
+        print ("b64decode fucked up with " + str(e))
+    uid = values.get('uid')
+    publ_key = ''
+
+    conf = open(config_path, 'r').read()
+    json_str = json.loads(conf)
+    nodes = json_str.get('nodes')
+    
+    for node in nodes:
+        if (node['uid']==uid):
+            publ_key = node['pub_key']
+            break
+    print(publ_key) 
+    #print(RSA.importKey(publ_key))
+
+    h = SHA256.new()
+    bytes_proof = proof.to_bytes(255, byteorder='little')
+    h.update(bytes_proof)
+    print('sign checking')
+    key = RSA.importKey(publ_key)
+    #print (key.publickey() )
+    print(PKCS1_v1_5.new(key).verify(h, sign))
+    print('sign checking_ok')
+
 
     #Check received proof
     last_block = blockchain.last_block
