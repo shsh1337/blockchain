@@ -1,16 +1,11 @@
 {
     "uid": "1f1f9e5911474dc6a2c02528b8670e62",
-    "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7AwcPIGa0zcoar6mFeH+Vc/2m\n+LSpErN6y1ETiRNsv7x2QzSkSIfsCB6Qvz3xCkMUSpKV+KBB1A9tDKnOfuhX9hXK\n2JeMr8Txgl/bArP4BQWWMkU5U9MBqLT79Hr/2XfHTH7/WAnyZqrcitN5nipb+wup\nVDo4NdOoUh7jyUXQjQIDAQAB\n-----END PUBLIC KEY-----",
+    "pub_key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCUFc/k2Uq1APfd5ktw+B8dfaZxZ01peZTzuTT6ErJ4HNlBq0GUjj5z7+BI3HtVcULRA7NK+txMQ0WzDt1lGrNfaCi3/UHyM9cqOWTKpZ2PNmiyIboeC1Um1FfYa3JjUCpranErqGuto90Yvbpxz3eLZ6bgMu2hD1nAsBIitpw4kQIDAQAB'",
     "nodes": [
         {
             "address": "localhost:5000",
-            "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCiuRcQbzjGGVHtPtPqJdm9tpy6\nele1vDfImn+mrWTqyGCxPFr5Hi0a6H0UiMhZTvFx3Wj+w1BMwX43x6FWPZY9xNuy\n9kNZEkFpJmhG62jOK3a/yAMSThfmP+rKar2yRU02T3931wNJ/A6HOgy2twhEZ7JZ\nxedbzDiNlOBq0kmDCQIDAQAB\n-----END PUBLIC KEY-----",
+            "pub_key": "",
             "uid": "b7fd28117c0040a798433ced25577e45"
-        },
-        {
-            "address": "localhost:5002",
-            "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDiY/JlYQZvkHH+wbM7rCb8pKIU\nupfVUQpYghlCtnElsqb9C9Kh9t8zV9lf78ioeQCcvzKTk5W+zpGbQz5BEwr3JsuE\njjge5o7Lgz3CaRzDG203K39FVKPwyQ50okFMM4cevX44zDlhBULqkj9+xFYhAUaT\ntAMe0TANA8EM6Za8xwIDAQAB\n-----END PUBLIC KEY-----",
-            "uid": "a0c43caf8db54ee2bbf0d51511710729"
         }
     ]
 }

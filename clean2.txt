@@ -1,0 +1,11 @@
+{
+    "uid": "1f1f9e5911474dc6a2c02528b8670e62",
+    "pub_key": "",
+    "nodes": [
+        {
+            "address": "localhost:5000",
+            "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCiuRcQbzjGGVHtPtPqJdm9tpy6\nele1vDfImn+mrWTqyGCxPFr5Hi0a6H0UiMhZTvFx3Wj+w1BMwX43x6FWPZY9xNuy\n9kNZEkFpJmhG62jOK3a/yAMSThfmP+rKar2yRU02T3931wNJ/A6HOgy2twhEZ7JZ\nxedbzDiNlOBq0kmDCQIDAQAB\n-----END PUBLIC KEY-----",
+            "uid": "b7fd28117c0040a798433ced25577e45"
+        }
+    ]
+}

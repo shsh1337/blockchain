@@ -16,12 +16,19 @@ from Crypto.Signature import PKCS1_v1_5
 # if Error - "pip install pipenv" -> "pipenv install"
 
 
+serializebytes = lambda x : str (b64encode (x))[2:].strip('\\n').strip('\t')
+deserializebytes = lambda x : str (b64decode (x))[2:].strip('\\n').strip('\t')
+
+# @TODO move this variable to configuration
+RSA_KEY_LENGTH = 1024
+
+
 class Blockchain:
 
     # Generate a globally unique address for this node
     node_identifier = ''  # str(uuid4()).replace('-', '')
-    pub_key = ''
-    priv_key = ''
+    pub_key = None
+    priv_key = None
 
     def __init__(self):
         self.current_transactions = []
@@ -32,27 +39,64 @@ class Blockchain:
         # Create the genesis block
         self.new_block(previous_hash='1', proof=100)
 
+    """
+    #
+    # Method to generate public and private key pair
+    # used to sign/verify proof value
+    #
+    """
     def gen_keys(self):
-        key = RSA.generate(1024)
-        #print("Secr key: ", key)
-        f = open(self.node_identifier+'_privk', 'wb')
-        f.write(bytes(key.exportKey('PEM', passphrase='')))
-        f.close()
-        # print(key.exportKey('PEM'))
+        #
+        # Generate RSA_KEY_LENGTH bit keypair
+        #
+        key = RSA.generate(RSA_KEY_LENGTH)
+        
+        
+        #
+        # Use DER format for key pair
+        #
 
-        # Получаете открытый ключ из закрытого
-        pubkey = key.publickey()
-        #print("PubKey: ", pubkey)
-        f = open(self.node_identifier+'_pk', 'wb')
-        f.write(bytes(pubkey.exportKey('PEM')))
-        f.close()
-        return pubkey.exportKey('PEM'), key.exportKey('PEM', passphrase='')
+        #
+        # Open file pointer for key pair
+        #
+        PKFile = open(self.node_identifier+'_privatekey', 'wb')
+        PubKFile = open(self.node_identifier+'_publickey', 'wb')
+
+        #
+        # Export private and public keys
+        #
+        PK = key.exportKey('DER', passphrase='')
+        PubK = key.publickey().exportKey('DER')
+
+        #
+        # Write exported key pair to file pointers
+        #
+        PKFile.write(PK)
+        PubKFile.write(PubK)
+
+        #
+        # Close FP's
+        #
+        PKFile.close()
+        PubKFile.close()
+
+        #
+        # Encode keys with base64
+        #
+        PubK_b64 = serializebytes(PubK)
+        PK_b64 = serializebytes (PK)
+
+        #
+        # Return DER formated key pair
+        #
+        return PubK_b64, PK_b64
 
     def signing(self, data):
-        #key = RSA.importKey(self.priv_key)
+        print(self.priv_key)
+        key = RSA.importKey(b64decode(self.priv_key))
         h = SHA256.new()
-        h.update(data.to_bytes(255, byteorder='big'))
-        signature = PKCS1_v1_5.new(self.priv_key).sign(h)
+        h.update(data.to_bytes(255, byteorder='little'))
+        signature = PKCS1_v1_5.new(key).sign(h)
         return signature
 
         #print(PKCS1_v1_5.new(pubkey).verify(h, signature))
@@ -86,17 +130,24 @@ class Blockchain:
             print("Node id is: "+self.node_identifier)
 
             if (json_str.get('pub_key') == ''):
-                # тут вызов процедуры генерации ключей
+                #
+                # Тут вызов процедуры генерации ключей
+                #
                 self.pub_key, self.priv_key = self.gen_keys()
-                json_str['pub_key'] = self.pub_key.decode('UTF-8')
-                # print(self.pub_key.decode('UTF-8'))
-                # print(self.priv_key.decode('UTF-8'))
-                w_path.write_text(json.dumps(
-                    json_str, sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
+                json_str['pub_key'] = self.pub_key
+                w_path.write_text(
+                  json.dumps (
+                    json_str,
+                    sort_keys=False,
+                    indent=4,
+                    separators=(',', ': ')
+                    ),
+                  encoding='utf-8'
+                  )
             else:
-                self.pub_key = RSA.importKey(json_str.get('pub_key'))
-                self.priv_key = RSA.importKey(
-                    open(self.node_identifier+'_privk').read())
+                PK = open (self.node_identifier+'_privatekey', 'rb')
+                self.pub_key = json_str.get('pub_key')
+                self.priv_key = serializebytes(PK.read())
                 # print(self.pub_key)
                 # print(self.priv_key)
             #print("Public key is: ",self.pub_key)
@@ -278,11 +329,12 @@ class Blockchain:
         #
         # Encode signature with base64
         #
-        signature = str(b64encode(signature))[2:].strip('\\n')
-
+        signature = serializebytes(signature)
+        print (self.pub_key)
         request = {
             'proof': proof,
             'sign': signature,
+            'pub_key' : self.pub_key,
             'uid': self.node_identifier
         }
         # print(request)
@@ -293,7 +345,7 @@ class Blockchain:
             # , headers=headers)
             r = requests.post(
                 'http://'+node+'/nodes/proof_verify', json=request)
-            print('Response: '+r.text)
+            print('Response: ' + r.text)
 
         return True
 
@@ -361,18 +413,23 @@ def get_info():
 @app.route('/nodes/proof_verify', methods=['POST'])
 def proof_verify():
     values = request.get_json()
-    print(values)
-    proof = values.get('proof')
-    print("debug")
-    print(values.get('sign'))
-    print("---")
-    try:
-        sign = b64decode(values.get('sign'))
-    except Exception as e:
-        print("b64decode fucked up with " + str(e))
-    uid = values.get('uid')
-    publ_key = ''
 
+    print(values)
+
+    proof = values.get('proof')
+
+    print("debug")
+
+    print(values.get('sign'))
+
+    print("---")
+
+    sign = b64decode(values.get('sign'))
+
+    uid = values.get('uid')
+    publ_key = b64decode(values.get('pub_key'))
+
+    """
     conf = open(config_path, 'r').read()
     json_str = json.loads(conf)
     nodes = json_str.get('nodes')
@@ -381,6 +438,8 @@ def proof_verify():
         if (node['uid'] == uid):
             publ_key = node['pub_key']
             break
+    """
+
     print(publ_key)
     # print(RSA.importKey(publ_key))
 
@@ -397,10 +456,10 @@ def proof_verify():
     last_block = blockchain.last_block
     if blockchain.valid_proof(last_block['proof'], proof, blockchain.hash(last_block)):
         # все четко
-        return True
+        return str(1), 200
     else:
         # проблемс
-        return False
+        return str(0), 200
 
 
 @app.route('/transactions/new', methods=['POST'])

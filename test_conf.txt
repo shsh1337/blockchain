@@ -1,10 +1,10 @@
 {
     "uid": "b7fd28117c0040a798433ced25577e45",
-    "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCiuRcQbzjGGVHtPtPqJdm9tpy6\nele1vDfImn+mrWTqyGCxPFr5Hi0a6H0UiMhZTvFx3Wj+w1BMwX43x6FWPZY9xNuy\n9kNZEkFpJmhG62jOK3a/yAMSThfmP+rKar2yRU02T3931wNJ/A6HOgy2twhEZ7JZ\nxedbzDiNlOBq0kmDCQIDAQAB\n-----END PUBLIC KEY-----",
+    "pub_key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCWYpipZ78n7YBhDILuToRa1XOTkpZIPoxmqXSfmoHCSi6CPTpQ0JtvQRcy/ZF4B7beC5dg8bRhBx/lh1E0AaaN6hWkX2vs/8iKmDFMU72CD9T7CAvZKDkG8Gmxy3KjdfjbyUGvbpP/ufYS+pO3xCYrGM/bArgUOnLoJ+Dq903DMQIDAQAB'",
     "nodes": [
         {
             "address": "localhost:5001",
-            "pub_key": "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7AwcPIGa0zcoar6mFeH+Vc/2m\n+LSpErN6y1ETiRNsv7x2QzSkSIfsCB6Qvz3xCkMUSpKV+KBB1A9tDKnOfuhX9hXK\n2JeMr8Txgl/bArP4BQWWMkU5U9MBqLT79Hr/2XfHTH7/WAnyZqrcitN5nipb+wup\nVDo4NdOoUh7jyUXQjQIDAQAB\n-----END PUBLIC KEY-----",
+            "pub_key": "",
             "uid": "1f1f9e5911474dc6a2c02528b8670e62"
         }
     ]

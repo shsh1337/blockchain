@@ -1,0 +1,11 @@
+{
+    "uid": "b7fd28117c0040a798433ced25577e45",
+    "pub_key": "",
+    "nodes": [
+        {
+            "address": "localhost:5001",
+            "pub_key": "",
+            "uid": "1f1f9e5911474dc6a2c02528b8670e62"
+        }
+    ]
+}
