@@ -8,17 +8,18 @@ from pathlib import Path
 import requests
 from flask import Flask, jsonify, request
 
-from base64 import b64decode,b64encode
+from base64 import b64decode, b64encode
 
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-#if Error - "pip install pipenv" -> "pipenv install" 
+# if Error - "pip install pipenv" -> "pipenv install"
+
 
 class Blockchain:
 
-    ## Generate a globally unique address for this node
-    node_identifier = ''#str(uuid4()).replace('-', '')
+    # Generate a globally unique address for this node
+    node_identifier = ''  # str(uuid4()).replace('-', '')
     pub_key = ''
     priv_key = ''
 
@@ -27,25 +28,27 @@ class Blockchain:
         self.chain = []
         self.nodes = set()
         self.load_config(config_path)
-        #self.signing('test')
+        # self.signing('test')
         # Create the genesis block
         self.new_block(previous_hash='1', proof=100)
 
     def gen_keys(self):
         key = RSA.generate(1024)
         #print("Secr key: ", key)
-        f = open(self.node_identifier+'_privk','wb')
-        f.write(bytes(key.exportKey('PEM',passphrase=''))); f.close()
-        #print(key.exportKey('PEM'))
+        f = open(self.node_identifier+'_privk', 'wb')
+        f.write(bytes(key.exportKey('PEM', passphrase='')))
+        f.close()
+        # print(key.exportKey('PEM'))
 
         # Получаете открытый ключ из закрытого
         pubkey = key.publickey()
         #print("PubKey: ", pubkey)
-        f = open(self.node_identifier+'_pk','wb')
-        f.write(bytes(pubkey.exportKey('PEM'))); f.close()
-        return pubkey.exportKey('PEM'),key.exportKey('PEM',passphrase='')
+        f = open(self.node_identifier+'_pk', 'wb')
+        f.write(bytes(pubkey.exportKey('PEM')))
+        f.close()
+        return pubkey.exportKey('PEM'), key.exportKey('PEM', passphrase='')
 
-    def signing(self,data):
+    def signing(self, data):
         #key = RSA.importKey(self.priv_key)
         h = SHA256.new()
         h.update(data.to_bytes(255, byteorder='big'))
@@ -54,9 +57,9 @@ class Blockchain:
 
         #print(PKCS1_v1_5.new(pubkey).verify(h, signature))
         # Отличающийся хэш не должен проходить проверку
-        #pkcs1_15.new(pubkey).verify(SHA256.new(b'test'), signature) # raise ValueError("Invalid signature")
+        # pkcs1_15.new(pubkey).verify(SHA256.new(b'test'), signature) # raise ValueError("Invalid signature")
 
-    def load_config(self,c_path):
+    def load_config(self, c_path):
         exists = os.path.isfile(c_path)
         if not exists:
             # Store configuration file values d11589d93e7d4ba1a9e31844e6035734
@@ -68,35 +71,39 @@ class Blockchain:
             if conf == "":
                 print("Config file is clear.")
                 return
-            #print(conf)
+            # print(conf)
             json_str = json.loads(conf)
-            #print(json_str)
+            # print(json_str)
             nodes = json_str.get('nodes')
 
-            if (json_str.get('uid')==''):
+            if (json_str.get('uid') == ''):
                 self.node_identifier = str(uuid4()).replace('-', '')
                 json_str['uid'] = self.node_identifier
-                w_path.write_text(json.dumps(json_str,sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
+                w_path.write_text(json.dumps(
+                    json_str, sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
             else:
                 self.node_identifier = json_str.get('uid')
             print("Node id is: "+self.node_identifier)
 
-            if (json_str.get('pub_key')==''):
-                self.pub_key,self.priv_key = self.gen_keys() #тут вызов процедуры генерации ключей
+            if (json_str.get('pub_key') == ''):
+                # тут вызов процедуры генерации ключей
+                self.pub_key, self.priv_key = self.gen_keys()
                 json_str['pub_key'] = self.pub_key.decode('UTF-8')
-                #print(self.pub_key.decode('UTF-8'))
-                #print(self.priv_key.decode('UTF-8'))
-                w_path.write_text(json.dumps(json_str,sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
+                # print(self.pub_key.decode('UTF-8'))
+                # print(self.priv_key.decode('UTF-8'))
+                w_path.write_text(json.dumps(
+                    json_str, sort_keys=False, indent=4, separators=(',', ': ')), encoding='utf-8')
             else:
                 self.pub_key = RSA.importKey(json_str.get('pub_key'))
-                self.priv_key = RSA.importKey(open(self.node_identifier+'_privk').read())
-                #print(self.pub_key)
-                #print(self.priv_key)
+                self.priv_key = RSA.importKey(
+                    open(self.node_identifier+'_privk').read())
+                # print(self.pub_key)
+                # print(self.priv_key)
             #print("Public key is: ",self.pub_key)
 
-            #print(node_identifier)
+            # print(node_identifier)
             for node in nodes:
-                #print(node)#Debug
+                # print(node)#Debug
                 parsed_url = urlparse(node['address'])
                 if parsed_url.netloc:
                     self.nodes.add(parsed_url.netloc)
@@ -123,7 +130,6 @@ class Blockchain:
             self.nodes.add(parsed_url.path)
         else:
             raise ValueError('Invalid URL')
-
 
     def valid_chain(self, chain):
         """
@@ -251,7 +257,7 @@ class Blockchain:
 
          - Find a number p' such that hash(pp') contains leading 4 zeroes
          - Where p is the previous proof, and p' is the new proof
-         
+
         :param last_block: <dict> last Block
         :return: <int>
         """
@@ -265,13 +271,13 @@ class Blockchain:
 
         return proof
 
-    def proof_check(self,proof):
+    def proof_check(self, proof):
 
         signature = self.signing(proof)
-        
+
         #
         # Encode signature with base64
-        # 
+        #
         signature = str(b64encode(signature))[2:].strip('\\n')
 
         request = {
@@ -279,17 +285,17 @@ class Blockchain:
             'sign': signature,
             'uid': self.node_identifier
         }
-        #print(request)
-        #print(type(signature))
+        # print(request)
+        # print(type(signature))
         #headers = {'Content-type': 'application/json'}
         for node in self.nodes:
-            #print(node)
-            r=requests.post('http://'+node+'/nodes/proof_verify', json=request)#, headers=headers)
+            # print(node)
+            # , headers=headers)
+            r = requests.post(
+                'http://'+node+'/nodes/proof_verify', json=request)
             print('Response: '+r.text)
 
         return True
-
-
 
     @staticmethod
     def valid_proof(last_proof, proof, last_hash):
@@ -307,8 +313,10 @@ class Blockchain:
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:5] == "00000"
 
+
 # Instantiate the Node
 app = Flask(__name__)
+
 
 @app.route('/mine', methods=['GET'])
 def mine():
@@ -317,7 +325,7 @@ def mine():
     proof = blockchain.proof_of_work(last_block)
 
     blockchain.proof_check(proof)
-    ###send proof to another nodes
+    # send proof to another nodes
 
     # We must receive a reward for finding the proof.
     # The sender is "0" to signify that this node has mined a new coin.
@@ -340,6 +348,7 @@ def mine():
     }
     return jsonify(response), 200
 
+
 @app.route('/info', methods=['GET'])
 def get_info():
     response = {
@@ -348,31 +357,32 @@ def get_info():
     }
     return jsonify(response), 200
 
+
 @app.route('/nodes/proof_verify', methods=['POST'])
 def proof_verify():
     values = request.get_json()
     print(values)
     proof = values.get('proof')
-    print ("debug")
-    print (values.get('sign'))
-    print ("---")
+    print("debug")
+    print(values.get('sign'))
+    print("---")
     try:
         sign = b64decode(values.get('sign'))
     except Exception as e:
-        print ("b64decode fucked up with " + str(e))
+        print("b64decode fucked up with " + str(e))
     uid = values.get('uid')
     publ_key = ''
 
     conf = open(config_path, 'r').read()
     json_str = json.loads(conf)
     nodes = json_str.get('nodes')
-    
+
     for node in nodes:
-        if (node['uid']==uid):
+        if (node['uid'] == uid):
             publ_key = node['pub_key']
             break
-    print(publ_key) 
-    #print(RSA.importKey(publ_key))
+    print(publ_key)
+    # print(RSA.importKey(publ_key))
 
     h = SHA256.new()
     bytes_proof = proof.to_bytes(255, byteorder='little')
@@ -383,15 +393,15 @@ def proof_verify():
     print(PKCS1_v1_5.new(key).verify(h, sign))
     print('sign checking_ok')
 
-
-    #Check received proof
+    # Check received proof
     last_block = blockchain.last_block
-    if blockchain.valid_proof(last_block['proof'],proof,blockchain.hash(last_block)):
-        #все четко
+    if blockchain.valid_proof(last_block['proof'], proof, blockchain.hash(last_block)):
+        # все четко
         return True
     else:
-        #проблемс
+        # проблемс
         return False
+
 
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
@@ -403,7 +413,8 @@ def new_transaction():
         return 'Missing values', 400
 
     # Create a new Transaction
-    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+    index = blockchain.new_transaction(
+        values['sender'], values['recipient'], values['amount'])
 
     response = {'message': f'Transaction will be added to Block {index}'}
     return jsonify(response), 201
@@ -455,22 +466,24 @@ def consensus():
 
 
 config_path = ''
-## Generate a globally unique address for this node
-#node_identifier = '098'#str(uuid4()).replace('-', '')
+# Generate a globally unique address for this node
+# node_identifier = '098'#str(uuid4()).replace('-', '')
 #pub_key = '987'
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
-    parser.add_argument('-c', '--config', default='test_conf.txt', type=str, help='path to config file')
+    parser.add_argument('-p', '--port', default=5000,
+                        type=int, help='port to listen on')
+    parser.add_argument('-c', '--config', default='test_conf.txt',
+                        type=str, help='path to config file')
     args = parser.parse_args()
     port = args.port
     #conf_path = args.config
     config_path = args.config
     #print("Node id is: "+node_identifier)
     Error = True
-    while(Error): 
+    while(Error):
         try:
             Error = False
             # Instantiate the Blockchain
